@@ -11,7 +11,7 @@ const REPETICOES = { nao: "Não repete", diaria: "Todo dia", dias_uteis: "Dias �
 const ORDINAIS_FIM = { "-1": "Último", "-2": "Penúltimo", "-3": "Antepenúltimo" };
 const COR_PRIORIDADE = { 1: "vermelho", 2: "laranja", 3: "cinza" };
 
-const estado = { foto: null, aba: "hoje", sub: null, guia: "trabalho", aberto: null, erro: null, falhaEnvio: false,
+const estado = { foto: null, aba: "hoje", sub: null, guia: "trabalho", cat: null, aberto: null, erro: null, falhaEnvio: false,
                  msgLogin: "", ocupado: false, lendo: false, lerDeNovo: false };
 
 // ---------------------------------------------------------------- datas (sempre no horário do aparelho)
@@ -208,7 +208,7 @@ function linhaLembrete(l) {
 function rodape(d) {
   const em = d.atualizado && d.atualizado.em;
   return `<p class="apagado pequeno">${em ? `O PC atualizou os dados em ${ddmm(em)} às ${hhmm(em)}.` : ""}
-    A agenda do Outlook, o Mercado e as Notícias ficam só no PC.</p>`;
+    A agenda do Outlook e o Mercado ficam só no PC.</p>`;
 }
 
 // ---------------------------------------------------------------- telas
@@ -274,6 +274,24 @@ function telaLembretes(d) {
     + grupos.filter(([, l]) => l.length).map(([nome, l]) => `<h2>${nome}</h2>${l.map(linhaLembrete).join("")}`).join("")
     + (ativos.length ? "" : `<p class="apagado">Nenhum lembrete.</p>`)
     + (feitos.length ? `<details><summary>Concluídos recentemente (${feitos.length})</summary>${feitos.map(linhaLembrete).join("")}</details>` : "");
+}
+
+function telaNoticias(d) {
+  const n = d.noticias;
+  if (!n) return topo(d, "") + `<h1>Notícias</h1><p class="apagado">O PC ainda não mandou as manchetes. Elas chegam na próxima sincronização.</p>`;
+  const cats = Object.keys(n.categorias);
+  if (!cats.includes(estado.cat)) estado.cat = cats[0];
+  const itens = n.categorias[estado.cat] || [];
+  const quando = n.coletado_em ? `O PC buscou ${n.coletado_em.slice(0, 10) === hoje() ? "hoje" : "em " + ddmm(n.coletado_em)} às ${hhmm(n.coletado_em)}.` : "";
+  // Só links http(s): o PC já filtra, mas a página não confia no que vem de fora
+  const linha = x => `<div class="linha noticia"><div class="info">
+      <div class="nome">${/^https?:\/\//i.test(x.link) ? `<a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${esc(x.titulo)}</a>` : esc(x.titulo)}</div>
+      <div class="detalhe">${esc(x.fonte)} · ${esc(diaCurto(x.publicado_em))} às ${esc(hhmm(x.publicado_em))}</div>
+      ${x.resumo ? `<div class="detalhe resumo">${esc(x.resumo)}</div>` : ""}</div></div>`;
+  return topo(d, "") + `<h1>Notícias</h1>
+    <div class="guias">${cats.map(c => `<button data-cat="${esc(c)}" class="${c === estado.cat ? "ativa" : ""}">${esc(c)}</button>`).join("")}</div>
+    <p class="apagado pequeno">${quando} Com o Organizador aberto, ele busca de novo a cada 30 minutos.</p>`
+    + (itens.length ? itens.map(linha).join("") : `<p class="apagado">Nenhuma notícia dos últimos dias nesta categoria.</p>`);
 }
 
 function telaMais(d) {
@@ -383,7 +401,7 @@ function render() {
                                  : `<p class="carregando">Carregando…</p>`;
     return;
   }
-  tela.innerHTML = { hoje: telaHoje, tarefas: telaTarefas, lembretes: telaLembretes, mais: telaMais }[estado.aba](d);
+  tela.innerHTML = { hoje: telaHoje, tarefas: telaTarefas, lembretes: telaLembretes, noticias: telaNoticias, mais: telaMais }[estado.aba](d);
   // Largura da barra pelo JS: a CSP da página não deixa estilo escrito no HTML
   tela.querySelectorAll("[data-largura]").forEach(el => { el.style.width = el.dataset.largura + "%"; });
 }
@@ -455,6 +473,7 @@ document.addEventListener("click", ev => {
   const ds = alvo.dataset;
   if (ds.aba) { Object.assign(estado, { aba: ds.aba, sub: null, aberto: null }); render(); scrollTo(0, 0); return; }
   if (ds.guia) { estado.guia = ds.guia; render(); return; }
+  if (ds.cat) { estado.cat = ds.cat; render(); scrollTo(0, 0); return; }
   if (ds.sub !== undefined) { Object.assign(estado, { sub: ds.sub || null, aberto: null }); render(); scrollTo(0, 0); return; }
   switch (ds.acao) {
     case "abrir": estado.aberto = estado.aberto === ds.chave ? null : ds.chave; render(); break;
