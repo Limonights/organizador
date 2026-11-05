@@ -11,7 +11,7 @@ const REPETICOES = { nao: "Não repete", diaria: "Todo dia", dias_uteis: "Dias �
 const ORDINAIS_FIM = { "-1": "Último", "-2": "Penúltimo", "-3": "Antepenúltimo" };
 const COR_PRIORIDADE = { 1: "vermelho", 2: "laranja", 3: "cinza" };
 
-const estado = { foto: null, aba: "hoje", sub: null, guia: "trabalho", cat: null, aberto: null, erro: null, falhaEnvio: false,
+const estado = { foto: null, aba: "hoje", sub: null, guia: "trabalho", cat: null, mercadoAba: "br", periodo: "dia", titulo: "NTN-B", aberto: null, erro: null, falhaEnvio: false,
                  msgLogin: "", ocupado: false, lendo: false, lerDeNovo: false };
 
 // ---------------------------------------------------------------- datas (sempre no horário do aparelho)
@@ -208,7 +208,7 @@ function linhaLembrete(l) {
 function rodape(d) {
   const em = d.atualizado && d.atualizado.em;
   return `<p class="apagado pequeno">${em ? `O PC atualizou os dados em ${ddmm(em)} às ${hhmm(em)}.` : ""}
-    A agenda do Outlook e o Mercado ficam só no PC.</p>`;
+    Tudo aqui vem do Organizador do PC, que precisa estar aberto.</p>`;
 }
 
 // ---------------------------------------------------------------- telas
@@ -223,10 +223,11 @@ function telaHoje(d) {
   const daGuia = doDia.filter(r => r.categoria === estado.guia);
   const vencendo = d.tarefas.filter(t => t.status === "aberta" && t.prazo && t.prazo <= h);
   const extenso = `${DIAS_EXTENSO[agora.getDay()]}, ${agora.getDate()} de ${MESES[agora.getMonth()]}`;
-  let html = topo(d, esc(extenso)) + `<h1>${saudacao}</h1>`;
+  let html = topo(d, esc(extenso)) + `<h1>${saudacao}</h1>` + faixaIndicadores(d);
   if (h > d.previstas.ate) html += `<div class="aviso">O PC não atualiza os dados há mais de um mês: as rotinas de hoje não aparecem. Abra o Organizador no PC.</div>`;
   html += `<p class="apagado pequeno">Rotinas do dia · ${feitas}/${doDia.length}</p>
     <div class="barra"><div data-largura="${doDia.length ? Math.round(100 * feitas / doDia.length) : 0}"></div></div>`;
+  html += blocoAgendaHoje(d);
   if (pend.length) {
     html += `<h2>Pendências de dias anteriores</h2><p class="apagado pequeno">Marque como feita ou pule (ex.: feriado).</p>`
           + pend.map(r => linhaRotina(r, r.dia, true)).join("");
@@ -298,7 +299,9 @@ function telaMais(d) {
   if (estado.sub === "rotinas") return telaRotinas(d);
   if (estado.sub === "atividades") return telaAtividades(d);
   if (estado.sub === "historico") return telaHistorico(d);
+  if (estado.sub === "agenda") return telaAgenda(d);
   return topo(d, "") + `<h1>Mais</h1><div class="lista-mais">
+      <button data-sub="agenda">Agenda (7 dias)</button>
       <button data-sub="rotinas">Rotinas</button>
       <button data-sub="atividades">Atividades (projetos)</button>
       <button data-sub="historico">Histórico</button>
@@ -401,7 +404,8 @@ function render() {
                                  : `<p class="carregando">Carregando…</p>`;
     return;
   }
-  tela.innerHTML = { hoje: telaHoje, tarefas: telaTarefas, lembretes: telaLembretes, noticias: telaNoticias, mais: telaMais }[estado.aba](d);
+  tela.innerHTML = { hoje: telaHoje, tarefas: telaTarefas, lembretes: telaLembretes, noticias: telaNoticias, mercado: telaMercado,
+                    mais: telaMais }[estado.aba](d);
   // Largura da barra pelo JS: a CSP da página não deixa estilo escrito no HTML
   tela.querySelectorAll("[data-largura]").forEach(el => { el.style.width = el.dataset.largura + "%"; });
 }
@@ -471,7 +475,10 @@ document.addEventListener("click", ev => {
   const alvo = ev.target.closest("button, [data-acao]");
   if (!alvo) return;
   const ds = alvo.dataset;
-  if (ds.aba) { Object.assign(estado, { aba: ds.aba, sub: null, aberto: null }); render(); scrollTo(0, 0); return; }
+  if (ds.aba) { Object.assign(estado, { aba: ds.aba, sub: ds.ir || null, aberto: null }); render(); scrollTo(0, 0); return; }
+  if (ds.mercado) { estado.mercadoAba = ds.mercado; render(); return; }
+  if (ds.periodo) { estado.periodo = ds.periodo; render(); return; }
+  if (ds.titulo) { estado.titulo = ds.titulo; render(); return; }
   if (ds.guia) { estado.guia = ds.guia; render(); return; }
   if (ds.cat) { estado.cat = ds.cat; render(); scrollTo(0, 0); return; }
   if (ds.sub !== undefined) { Object.assign(estado, { sub: ds.sub || null, aberto: null }); render(); scrollTo(0, 0); return; }

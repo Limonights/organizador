@@ -6,8 +6,9 @@ const Nuvem = (() => {
   const CHAVE = "organizador.nuvem.chave";      // token fine-grained deste aparelho
   const SAIDA = "organizador.nuvem.saida";      // pedidos ainda não enviados (sem rede, por exemplo)
   const FOTO = "organizador.nuvem.foto";        // última leitura, para abrir rápido e sem rede
-  const ARQUIVOS = ["rotinas", "previstas", "registros", "tarefas", "lembretes", "atividades", "listas", "atualizado", "noticias"];
-  const OPCIONAIS = new Set(["noticias"]);     // podem faltar num commit antigo do PC: viram null, sem erro
+  const ARQUIVOS = ["rotinas", "previstas", "registros", "tarefas", "lembretes", "atividades", "listas", "atualizado", "noticias",
+                    "agenda", "economia", "mercado", "mercado_diario"];
+  const OPCIONAIS = new Set(["noticias", "agenda", "economia", "mercado", "mercado_diario"]);     // podem faltar num commit antigo do PC: viram null, sem erro
   // Nos testes, um GitHub de mentira na própria máquina (só vale em localhost)
   const local = ["localhost", "127.0.0.1"].includes(location.hostname);
   const API = (local && localStorage.getItem("organizador.nuvem.api")) || "https://api.github.com";
