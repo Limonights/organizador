@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.github.com; manifest-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Organizador</title>
+<meta name="theme-color" content="#0E1117">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Organizador">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="estilo.css">
+<script src="config.js" defer></script>
+<script src="nuvem.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<main id="tela"><p class="carregando">Carregando…</p></main>
+<nav id="menu" hidden>
+  <button data-aba="hoje">Hoje</button>
+  <button data-aba="tarefas">Tarefas</button>
+  <button data-aba="lembretes">Lembretes</button>
+  <button data-aba="mais">Mais</button>
+</nav>
+</body>
+</html>
