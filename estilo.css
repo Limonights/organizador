@@ -76,3 +76,4 @@ nav#menu { position: fixed; left: 0; right: 0; bottom: 0; display: flex; backgro
   border-top: 1px solid var(--fio); padding: 4px 4px env(safe-area-inset-bottom); }
 nav#menu button { flex: 1; background: none; border: none; color: var(--apagado); padding: 12px 0; font-size: .85rem; }
 nav#menu button.ativa { color: var(--azul); font-weight: 600; }
+nav#menu[hidden] { display: none; }  /* o display:flex acima venceria o atributo hidden */
