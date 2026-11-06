@@ -107,7 +107,7 @@ function barraSetor(v, maior) {
   const w = Math.abs(v || 0) / maior * 50;
   const x = v >= 0 ? 50 : 50 - w;
   return `<svg class="trilho" viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect x="0" y="3.5" width="100" height="1" fill="rgba(250,250,250,.14)"/>
-    <rect x="${x.toFixed(1)}" y="1" width="${Math.max(w, 0.5).toFixed(1)}" height="6" rx="1" fill="${v >= 0 ? "#3DD56D" : "#FF6C6C"}"/></svg>`;
+    <rect x="${x.toFixed(1)}" y="1" width="${Math.max(w, 0.5).toFixed(1)}" height="6" rx="1" fill="${v >= 0 ? "#089981" : "#F23645"}"/></svg>`;
 }
 
 function abaIndice(c, nomeIndice) {
@@ -123,7 +123,7 @@ function abaIndice(c, nomeIndice) {
 }
 
 // Gráfico de linhas em SVG, sem biblioteca. series: [{nome, pontos: [[x, y, rótulo]]}] (1ª azul cheia, depois mais claras)
-const CORES = ["#4B8BFF", "#9CC0FF", "#8E8E8E"];
+const CORES = ["#2962FF", "#8EA9F5", "#787B86"];  // azul da TradingView
 const TRACOS = ["", "5 3", "2 3"];
 function grafico(series, { rotulosX = null, fmtY = v => br(v, 1) + "%", fmtX = v => br(v, 0), alto = 190 } = {}) {
   const todos = series.flatMap(s => s.pontos);
@@ -139,12 +139,12 @@ function grafico(series, { rotulosX = null, fmtY = v => br(v, 1) + "%", fmtX = v
   for (let i = 0; i <= 4; i++) {
     const y = y0 + (y1 - y0) * i / 4;
     svg += `<line x1="${E}" x2="${L - D}" y1="${py(y).toFixed(1)}" y2="${py(y).toFixed(1)}" stroke="rgba(128,128,128,.18)"/>
-      <text x="${E - 4}" y="${(py(y) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#A3A8B8">${esc(fmtY(y))}</text>`;
+      <text x="${E - 4}" y="${(py(y) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="#787B86">${esc(fmtY(y))}</text>`;
   }
   const marcas = rotulosX ? rotulosX.map((r, i) => [i, r]) : [0, 1, 2, 3, 4].map(i => [x0 + (x1 - x0) * i / 4]).map(([x]) => [x, fmtX(x)]);
   const passo = Math.ceil(marcas.length / 7);
   marcas.forEach(([x, r], i) => {
-    if (i % passo === 0) svg += `<text x="${px(x).toFixed(1)}" y="${A - 6}" text-anchor="middle" font-size="9" fill="#A3A8B8">${esc(r)}</text>`;
+    if (i % passo === 0) svg += `<text x="${px(x).toFixed(1)}" y="${A - 6}" text-anchor="middle" font-size="9" fill="#787B86">${esc(r)}</text>`;
   });
   series.forEach((s, i) => {
     const pts = [...s.pontos].sort((a, b) => a[0] - b[0]);
