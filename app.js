@@ -286,16 +286,17 @@ function telaRadar(d) {
   let html = `<div class="guias">${[["artesanal", "Artesanal"], ["mercado", "Mercado"]].map(([v, nome]) =>
     `<button data-radar="${v}" class="${parte === v ? "ativa" : ""}">${nome}</button>`).join("")}</div>
     <p class="apagado pequeno">${parte === "artesanal"
-      ? `FIDCs da casa e os que os fundos da Artesanal têm em carteira (${r.fundos} CNPJs, pelo Tático), últimos 30 dias.`
-      : "Fatos relevantes, comunicados e avisos aos cotistas dos demais FIDCs, últimos 7 dias."} Toque no fundo para abrir o documento.</p>`;
+      ? `Documentos no Fundos.NET dos FIDCs da casa e dos que os fundos têm em carteira (${r.fundos} CNPJs, pelo Tático).`
+      : "Documentos importantes dos demais FIDCs no Fundos.NET."} Últimos ${r.dias || 5} dias; em vermelho só o que tem cara de problema. Toque para abrir.</p>`;
   let dia = null;
   for (const x of docs) {
     const dd = x.entregue_em.slice(0, 10);
     if (dd !== dia) { dia = dd; html += `<h3 class="dia">${dd === hoje() ? "Hoje" : esc(diaCurto(dd))}</h3>`; }
-    const cor = x.categoria === "Fato relevante" ? "vermelho" : x.categoria === "Comunicado" ? "azul" : "cinza";
-    html += `<div class="linha evento"><div class="hora">${esc(hhmm(x.entregue_em))}</div><div class="info">
+    const selo = x.importante ? etq("vermelho", (x.motivo || "").split(",")[0]) : etq("cinza", x.categoria);
+    html += `<div class="linha radar ${x.importante ? "importante" : "rotina"}"><div class="info">
       <div class="nome"><a href="https://fnet.bmfbovespa.com.br/fnet/publico/exibirDocumento?id=${Number(x.id)}&amp;cvm=true" target="_blank" rel="noopener noreferrer">${esc(x.fundo)}</a></div>
-      <div class="detalhe">${etq(cor, x.categoria)} ${esc([x.tipo, x.relacao].filter(Boolean).join(" · "))}</div></div></div>`;
+      <div class="detalhe">${selo} ${esc([x.importante ? x.categoria : "", x.tipo, x.relacao].filter(Boolean).join(" · "))}</div>
+      ${x.trecho ? `<div class="detalhe resumo">${esc(x.trecho)}</div>` : ""}</div></div>`;
   }
   return html + (docs.length ? "" : `<p class="apagado">Nada no período.</p>`);
 }
@@ -310,9 +311,10 @@ function telaNoticias(d) {
   const itens = n.categorias[estado.cat] || [];
   const quando = n.coletado_em ? `O PC buscou ${n.coletado_em.slice(0, 10) === hoje() ? "hoje" : "em " + ddmm(n.coletado_em)} às ${hhmm(n.coletado_em)}.` : "";
   // Só links http(s): o PC já filtra, mas a página não confia no que vem de fora
-  const linha = x => `<div class="linha noticia"><div class="info">
+  const semHora = estado.cat === "FIDCs";  // pedido de 09/11/2026: notícias de FIDC sem horário, destaque só no importante
+  const linha = x => `<div class="linha noticia${semHora ? (x.motivo ? " radar importante" : " radar rotina") : ""}"><div class="info">
       <div class="nome">${/^https?:\/\//i.test(x.link) ? `<a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${esc(x.titulo)}</a>` : esc(x.titulo)}</div>
-      <div class="detalhe">${esc(x.fonte)} · ${esc(diaCurto(x.publicado_em))} às ${esc(hhmm(x.publicado_em))}</div>
+      <div class="detalhe">${x.motivo ? etq("vermelho", x.motivo.split(",")[0]) + " " : ""}${esc(x.fonte)} · ${esc(diaCurto(x.publicado_em))}${semHora ? "" : ` às ${esc(hhmm(x.publicado_em))}`}</div>
       ${x.resumo ? `<div class="detalhe resumo">${esc(x.resumo)}</div>` : ""}</div></div>`;
   return topo(d, "") + `<h1>Notícias</h1>` + abas + `
     <p class="apagado pequeno">${quando} Com o Organizador aberto, ele busca de novo a cada 30 minutos.</p>`
