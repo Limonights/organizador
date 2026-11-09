@@ -11,7 +11,7 @@ const REPETICOES = { nao: "Não repete", diaria: "Todo dia", dias_uteis: "Dias �
 const ORDINAIS_FIM = { "-1": "Último", "-2": "Penúltimo", "-3": "Antepenúltimo" };
 const COR_PRIORIDADE = { 1: "vermelho", 2: "laranja", 3: "cinza" };
 
-const estado = { foto: null, aba: "hoje", sub: null, guia: "trabalho", cat: null, mercadoAba: "br", periodo: "dia", titulo: "NTN-B", aberto: null, erro: null, falhaEnvio: false,
+const estado = { foto: null, aba: "hoje", sub: null, guia: "trabalho", cat: null, radarParte: "artesanal", mercadoAba: "br", periodo: "dia", titulo: "NTN-B", aberto: null, erro: null, falhaEnvio: false,
                  msgLogin: "", ocupado: false, lendo: false, lerDeNovo: false };
 
 // ---------------------------------------------------------------- datas (sempre no horário do aparelho)
@@ -277,11 +277,36 @@ function telaLembretes(d) {
     + (feitos.length ? `<details><summary>Concluídos recentemente (${feitos.length})</summary>${feitos.map(linhaLembrete).join("")}</details>` : "");
 }
 
+// Radar FIDC (09/11/2026): documentos que os FIDCs publicam no Fundos.NET da B3, separados em Artesanal e mercado
+const RADAR = "Radar FIDC";
+function telaRadar(d) {
+  const r = d.radar_fidc;
+  const parte = estado.radarParte;
+  const docs = r[parte] || [];
+  let html = `<div class="guias">${[["artesanal", "Artesanal"], ["mercado", "Mercado"]].map(([v, nome]) =>
+    `<button data-radar="${v}" class="${parte === v ? "ativa" : ""}">${nome}</button>`).join("")}</div>
+    <p class="apagado pequeno">${parte === "artesanal"
+      ? `FIDCs da casa e os que os fundos da Artesanal têm em carteira (${r.fundos} CNPJs, pelo Tático), últimos 30 dias.`
+      : "Fatos relevantes, comunicados e avisos aos cotistas dos demais FIDCs, últimos 7 dias."} Toque no fundo para abrir o documento.</p>`;
+  let dia = null;
+  for (const x of docs) {
+    const dd = x.entregue_em.slice(0, 10);
+    if (dd !== dia) { dia = dd; html += `<h3 class="dia">${dd === hoje() ? "Hoje" : esc(diaCurto(dd))}</h3>`; }
+    const cor = x.categoria === "Fato relevante" ? "vermelho" : x.categoria === "Comunicado" ? "azul" : "cinza";
+    html += `<div class="linha evento"><div class="hora">${esc(hhmm(x.entregue_em))}</div><div class="info">
+      <div class="nome"><a href="https://fnet.bmfbovespa.com.br/fnet/publico/exibirDocumento?id=${Number(x.id)}&amp;cvm=true" target="_blank" rel="noopener noreferrer">${esc(x.fundo)}</a></div>
+      <div class="detalhe">${etq(cor, x.categoria)} ${esc([x.tipo, x.relacao].filter(Boolean).join(" · "))}</div></div></div>`;
+  }
+  return html + (docs.length ? "" : `<p class="apagado">Nada no período.</p>`);
+}
+
 function telaNoticias(d) {
   const n = d.noticias;
-  if (!n) return topo(d, "") + `<h1>Notícias</h1><p class="apagado">O PC ainda não mandou as manchetes. Elas chegam na próxima sincronização.</p>`;
-  const cats = Object.keys(n.categorias);
+  if (!n && !d.radar_fidc) return topo(d, "") + `<h1>Notícias</h1><p class="apagado">O PC ainda não mandou as manchetes. Elas chegam na próxima sincronização.</p>`;
+  const cats = [...Object.keys(n ? n.categorias : {}), ...(d.radar_fidc ? [RADAR] : [])];
   if (!cats.includes(estado.cat)) estado.cat = cats[0];
+  const abas = `<div class="chips">${cats.map(c => `<button data-cat="${esc(c)}" class="${c === estado.cat ? "ativa" : ""}">${esc(c)}</button>`).join("")}</div>`;
+  if (estado.cat === RADAR) return topo(d, "") + `<h1>Notícias</h1>` + abas + telaRadar(d);
   const itens = n.categorias[estado.cat] || [];
   const quando = n.coletado_em ? `O PC buscou ${n.coletado_em.slice(0, 10) === hoje() ? "hoje" : "em " + ddmm(n.coletado_em)} às ${hhmm(n.coletado_em)}.` : "";
   // Só links http(s): o PC já filtra, mas a página não confia no que vem de fora
@@ -289,8 +314,7 @@ function telaNoticias(d) {
       <div class="nome">${/^https?:\/\//i.test(x.link) ? `<a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${esc(x.titulo)}</a>` : esc(x.titulo)}</div>
       <div class="detalhe">${esc(x.fonte)} · ${esc(diaCurto(x.publicado_em))} às ${esc(hhmm(x.publicado_em))}</div>
       ${x.resumo ? `<div class="detalhe resumo">${esc(x.resumo)}</div>` : ""}</div></div>`;
-  return topo(d, "") + `<h1>Notícias</h1>
-    <div class="guias">${cats.map(c => `<button data-cat="${esc(c)}" class="${c === estado.cat ? "ativa" : ""}">${esc(c)}</button>`).join("")}</div>
+  return topo(d, "") + `<h1>Notícias</h1>` + abas + `
     <p class="apagado pequeno">${quando} Com o Organizador aberto, ele busca de novo a cada 30 minutos.</p>`
     + (itens.length ? itens.map(linha).join("") : `<p class="apagado">Nenhuma notícia dos últimos dias nesta categoria.</p>`);
 }
@@ -481,6 +505,7 @@ document.addEventListener("click", ev => {
   if (ds.titulo) { estado.titulo = ds.titulo; render(); return; }
   if (ds.guia) { estado.guia = ds.guia; render(); return; }
   if (ds.cat) { estado.cat = ds.cat; render(); scrollTo(0, 0); return; }
+  if (ds.radar) { estado.radarParte = ds.radar; render(); return; }
   if (ds.sub !== undefined) { Object.assign(estado, { sub: ds.sub || null, aberto: null }); render(); scrollTo(0, 0); return; }
   switch (ds.acao) {
     case "abrir": estado.aberto = estado.aberto === ds.chave ? null : ds.chave; render(); break;
