@@ -39,6 +39,9 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .linha .detalhe { font-size: .8rem; color: var(--apagado); }
 .linha.feita .nome { color: var(--apagado); }
 .linha.noticia .nome a, .linha.evento .nome a { color: var(--texto); text-decoration: none; }
+/* Notícias de FIDC: vermelho só no importante, o resto apagado */
+.linha.noticia.importante { border-color: rgba(242,54,69,.6); background: rgba(242,54,69,.07); }
+.linha.noticia.rotina { opacity: .55; }
 .linha.noticia .resumo { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; }
 .circulo { width: 30px; height: 30px; flex: none; border-radius: 50%; border: 2px solid var(--apagado);
   background: none; padding: 0; display: grid; place-items: center; font-size: 16px; line-height: 1; }

@@ -286,9 +286,10 @@ function telaNoticias(d) {
   const itens = n.categorias[estado.cat] || [];
   const quando = n.coletado_em ? `O PC buscou ${n.coletado_em.slice(0, 10) === hoje() ? "hoje" : "em " + ddmm(n.coletado_em)} às ${hhmm(n.coletado_em)}.` : "";
   // Só links http(s): o PC já filtra, mas a página não confia no que vem de fora
-  const linha = x => `<div class="linha noticia"><div class="info">
+  const fidc = estado.cat === "FIDCs";  // notícias de FIDC: sem horário, vermelho só no importante (09/11/2026)
+  const linha = x => `<div class="linha noticia${fidc ? (x.motivo ? " importante" : " rotina") : ""}"><div class="info">
       <div class="nome">${/^https?:\/\//i.test(x.link) ? `<a href="${esc(x.link)}" target="_blank" rel="noopener noreferrer">${esc(x.titulo)}</a>` : esc(x.titulo)}</div>
-      <div class="detalhe">${esc(x.fonte)} · ${esc(diaCurto(x.publicado_em))} às ${esc(hhmm(x.publicado_em))}</div>
+      <div class="detalhe">${x.motivo ? etq("vermelho", x.motivo.split(",")[0]) + " " : ""}${esc(x.fonte)} · ${esc(diaCurto(x.publicado_em))}${fidc ? "" : ` às ${esc(hhmm(x.publicado_em))}`}</div>
       ${x.resumo ? `<div class="detalhe resumo">${esc(x.resumo)}</div>` : ""}</div></div>`;
   return topo(d, "") + `<h1>Notícias</h1>` + abas + `
     <p class="apagado pequeno">${quando} Com o Organizador aberto, ele busca de novo a cada 30 minutos.</p>`
